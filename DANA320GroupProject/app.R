@@ -44,7 +44,7 @@ ui <- fluidPage(
                  selectInput(inputId = "company",
                              label = "Choose a company",
                              choices = companies,
-                             selected = companies[[2]]),
+                             selected = companies),
                  selectInput(inputId = "yVar",
                              label = "Choose a Y variable",
                              choices = variablesFiltered,
@@ -95,8 +95,7 @@ server <- function(input, output) {
     company_specific_df <- companies_data %>% 
       filter(Company == input$company) %>%
       mutate(Period = as.Date(Period, "%m/%d/%Y")) %>%
-      arrange(Period)
-
+      filter(Period > input$dates[1] & Period < input$dates[2])
     
 
     p2 <- ggplot() + theme_bw()
