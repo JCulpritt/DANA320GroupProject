@@ -1,45 +1,71 @@
 library(shiny)
 library(tidyverse)
 
-companies <- read_csv(file = "./Top_12_German_Companies.csv")
+companies_data <- read_csv(file = "./Top_12_German_Companies.csv")
 
-variables <- setdiff(names(companies), "Companies")
-
+variables <- setdiff(names(companies_data), "Companies")
+variablesFiltered = variables[-(1:2)]
+companies <- companies_data %>% distinct(Company) %>% pull()
 
 ui <- fluidPage(
   titlePanel("12 German Companies"),
   tabsetPanel(   
     type = "pills",
-    tabPanel("Page 1",
     
-  
-    # Sidebar with inputs for variables
-      sidebarLayout(
-        sidebarPanel(
-          selectInput(inputId = "xVar",
-                      label = "Choose an X variable",
-                      choices = variables),
-          selectInput(inputId = "yVar",
-                      label = "Choose a Y variable",
-                      choices = variables,
-                      selected = variables[[2]]),
-          
-          #Checkbox for coloring by companies
-          checkboxInput(inputId = "company",
-                        label = "Color by Company",
-                        value = TRUE)
-        ),
-      
-      # Show a plot of the generated distribution
-       mainPanel(
-          plotOutput(outputId = "plot1")
-        )
-      )
+    tabPanel("Page 1",
+             
+             # Sidebar with inputs for variables
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput(inputId = "xVar",
+                             label = "Choose an X variable",
+                             choices = variables),
+                 selectInput(inputId = "yVar",
+                             label = "Choose a Y variable",
+                             choices = variables,
+                             selected = variables[[2]]),
+                 
+                 #Checkbox for coloring by companies
+                 checkboxInput(inputId = "company",
+                               label = "Color by Company",
+                               value = TRUE)
+               ),
+               
+               # Show a plot of the generated distribution
+               mainPanel(
+                 plotOutput(outputId = "plot1")
+               )
+             )
     ),
+    
     tabPanel("Page2", 
-  )        
-           
-           )
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput(inputId = "company",
+                             label = "Choose a company",
+                             choices = companies,
+                             selected = companies[[2]]),
+                 selectInput(inputId = "yVar",
+                             label = "Choose a Y variable",
+                             choices = variablesFiltered,
+                             selected = variablesFiltered[[2]]),
+                 dateRangeInput("dates", 
+                                "Date range",
+                                start = "2017-03-31", 
+                                end = "2024-12-31",
+                                min = "2017-03-31",
+                                max = "2024-12-31")
+
+               ),
+               
+               # Show a plot of the generated distribution
+               mainPanel(
+                 plotOutput(outputId = "plot2")
+               )
+             )
+    )        
+    
+  )
 )  
 
 server <- function(input, output) {
@@ -54,16 +80,32 @@ server <- function(input, output) {
         geom_point(aes(x = .data[[input$xVar]],
                        y = .data[[input$yVar]],
                        color = Company),
-                   data = companies)
+                   data = companies_data)
     } else {
       p1 <- p1 + 
         geom_point(aes(x = .data[[input$xVar]],
                        y = .data[[input$yVar]]),
-                   data = companies)
+                   data = companies_data)
     }
     
     print(p1)
     
+  })
+  output$plot2 <- renderPlot({
+    company_specific_df <- companies_data %>% 
+      filter(Company == input$company) %>%
+      mutate(Period = as.Date(Period, "%m/%d/%Y")) %>%
+      arrange(Period)
+
+    
+
+    p2 <- ggplot() + theme_bw()
+    p2 <- p2 + geom_col(aes(
+      x = .data$Period,
+      y = .data[[input$yVar]]),
+      data = company_specific_df)
+    
+    print(p2)
   })
 }
 
