@@ -7,32 +7,40 @@ variables <- setdiff(names(companies), "Companies")
 
 
 ui <- fluidPage(
-  
-  titlePanel("Top 12 German Companies"),
-  
-  # Sidebar with inputs for variables
-  sidebarLayout(
-    sidebarPanel(
-      selectInput(inputId = "xVar",
-                  label = "Choose an X variable",
-                  choices = variables),
-      selectInput(inputId = "yVar",
-                  label = "Choose a Y variable",
-                  choices = variables,
-                  selected = variables[[2]]),
-      
-      #Checkbox for coloring by companies
-      checkboxInput(inputId = "company",
-                    label = "Color by Company",
-                    value = TRUE)
-    ),
+  titlePanel("12 German Companies"),
+  tabsetPanel(   
+    type = "pills",
+    tabPanel("Page 1",
     
-    # Show a plot of the generated distribution
-    mainPanel(
-      plotOutput(outputId = "plot1")
-    )
-  )
-)
+  
+    # Sidebar with inputs for variables
+      sidebarLayout(
+        sidebarPanel(
+          selectInput(inputId = "xVar",
+                      label = "Choose an X variable",
+                      choices = variables),
+          selectInput(inputId = "yVar",
+                      label = "Choose a Y variable",
+                      choices = variables,
+                      selected = variables[[2]]),
+          
+          #Checkbox for coloring by companies
+          checkboxInput(inputId = "company",
+                        label = "Color by Company",
+                        value = TRUE)
+        ),
+      
+      # Show a plot of the generated distribution
+       mainPanel(
+          plotOutput(outputId = "plot1")
+        )
+      )
+    ),
+    tabPanel("Page2", 
+  )        
+           
+           )
+)  
 
 server <- function(input, output) {
   output$plot1 <- renderPlot({
