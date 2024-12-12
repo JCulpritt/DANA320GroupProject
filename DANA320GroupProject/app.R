@@ -3,6 +3,12 @@ library(tidyverse)
 library(plotly)
 library(RColorBrewer)
 
+# This app was made to develop plots based on the Top 12 German Companies. The user can dive into the data to discover the trends that may be present.
+# There are a number of different pages for the user to explore, including pages for a scatter plot, a bar plot, a 3D scatter plot, a box plot, and a 
+# correlation heat map. Within these pages are a number of variables that can be changed to manipulate the data, some of which include the following:
+# coloration, a selection of the companies, date ranges, and the general variables. Have fun exploring the app! Find out as much as you can about the 
+# financial circumstances of these companies!
+
 # Load data
 companies <- read_csv(file = "./Top_12_German_Companies_NEW.csv")
 companies_data <- read_csv(file = "./Top_12_German_Companies_NEW.csv")
@@ -17,85 +23,89 @@ companies_list <- companies %>% distinct(Company) %>% pull()
 
 # UI
 ui <- fluidPage(
-
-titlePanel("Top 12 German Companies"),
-
-tabsetPanel(
-  type = "pills",
   
-  tabPanel("Scatter Plot",
-           sidebarLayout(
-             sidebarPanel(
-               selectInput(inputId = "xVar", label = "Choose an X variable", choices = variables),
-               selectInput(inputId = "yVar", label = "Choose a Y variable", choices = variables, selected = variables[[2]]),
-               checkboxInput(inputId = "company", label = "Color by Company", value = TRUE)
-             ),
-             mainPanel(
-               plotOutput(outputId = "plot1", height = "800px", width = "100%")
-             )
-           )
-  ),
+  titlePanel("Top 12 German Companies"),
   
-  tabPanel("Bar Plot",
-           sidebarLayout(
-             sidebarPanel(
-               selectInput(inputId = "company", label = "Choose a company", choices = companies_list, selected = companies),
-               selectInput(inputId = "yVar", label = "Choose a Y variable", choices = variablesFiltered, selected = variablesFiltered[[2]]),
-               dateRangeInput("dates", "Date range", start = "2017-03-31", end = "2024-12-31", min = "2017-03-31", max = "2024-12-31")
-             ),
-             mainPanel(
-               plotOutput(outputId = "plot2", height = "800px", width = "100%")
-             )
-           )
-  ),
-  
-  tabPanel("3D Scatter Plot",
-           titlePanel("- 3D Scatter Plot - Use in a full window please!"),
-           sidebarLayout(
-             sidebarPanel(
-               selectInput(inputId = "yVar", label = "Choose Y variable", choices = variables2),
-               selectInput(inputId = "zVar", label = "Choose Z variable", choices = variables2),
-               sliderInput(inputId = "dateRange", label = "Select Date Range", min = min(companies$Period), max = max(companies$Period), value = c(min(companies$Period), max(companies$Period)), timeFormat = "%Y-%m-%d"),
-               width = 3
-             ),
-             mainPanel(
-               plotlyOutput(outputId = "scatter3d", height = "800px", width = "100%")
-             )
-           )
-  ),
-  
-  tabPanel("Box Plot",
-           sidebarLayout(
-             sidebarPanel(
-               selectInput(inputId = "boxCompany", label = "Choose a Company", choices = companies_list),
-               selectInput(inputId = "boxVar", label = "Choose a Variable", choices = variablesFiltered)
-             ),
-             mainPanel(
-               plotOutput(outputId = "boxPlot", height = "800px", width = "100%")
-             )
-           )
-  ),
-  tabPanel("Correlation Heatmap",
-           sidebarLayout(
-             sidebarPanel(
-               checkboxGroupInput(
-                 inputId = "corrVars",
-                 label = "Select Variables",
-                 choices = numericVariables,
-                 selected = numericVariables
+  tabsetPanel(
+    type = "pills",
+    
+    tabPanel("Scatter Plot",
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput(inputId = "xVar", label = "Choose an X variable", choices = variables),
+                 selectInput(inputId = "yVar", label = "Choose a Y variable", choices = variables, selected = variables[[2]]),
+                 checkboxInput(inputId = "company", label = "Color by Company", value = TRUE),
+                 checkboxGroupInput(inputId = "selectedCompanies",
+                                    label = "Select Companies to Display",
+                                    choices = companies_list,
+                                    selected = companies_list)
                ),
-               dateRangeInput("corrDates", "Date range", 
-                              start = min(companies$Period), 
-                              end = max(companies$Period),
-                              min = min(companies$Period), 
-                              max = max(companies$Period)),
-             ),
-             mainPanel(
-               plotOutput("corrPlot", height = "800px", width = "100%")
+               mainPanel(
+                 plotOutput(outputId = "plot1", height = "800px", width = "100%")
+               )
              )
-           )
+    ),
+    
+    tabPanel("Bar Plot",
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput(inputId = "company", label = "Choose a company", choices = companies_list, selected = companies),
+                 selectInput(inputId = "yVar", label = "Choose a Y variable", choices = variablesFiltered, selected = variablesFiltered[[2]]),
+                 dateRangeInput("dates", "Date range", start = "2017-03-31", end = "2024-12-31", min = "2017-03-31", max = "2024-12-31")
+               ),
+               mainPanel(
+                 plotOutput(outputId = "plot2", height = "800px", width = "100%")
+               )
+             )
+    ),
+    
+    tabPanel("3D Scatter Plot",
+             titlePanel("- 3D Scatter Plot - Use in a full window please!"),
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput(inputId = "yVar", label = "Choose Y variable", choices = variables2),
+                 selectInput(inputId = "zVar", label = "Choose Z variable", choices = variables2),
+                 sliderInput(inputId = "dateRange", label = "Select Date Range", min = min(companies$Period), max = max(companies$Period), value = c(min(companies$Period), max(companies$Period)), timeFormat = "%Y-%m-%d"),
+                 width = 3
+               ),
+               mainPanel(
+                 plotlyOutput(outputId = "scatter3d", height = "800px", width = "100%")
+               )
+             )
+    ),
+    
+    tabPanel("Box Plot",
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput(inputId = "boxCompany", label = "Choose a Company", choices = companies_list),
+                 selectInput(inputId = "boxVar", label = "Choose a Variable", choices = variablesFiltered)
+               ),
+               mainPanel(
+                 plotOutput(outputId = "boxPlot", height = "800px", width = "100%")
+               )
+             )
+    ),
+    tabPanel("Correlation Heatmap",
+             sidebarLayout(
+               sidebarPanel(
+                 checkboxGroupInput(
+                   inputId = "corrVars",
+                   label = "Select Variables",
+                   choices = numericVariables,
+                   selected = numericVariables
+                 ),
+                 dateRangeInput("corrDates", "Date range", 
+                                start = min(companies$Period), 
+                                end = max(companies$Period),
+                                min = min(companies$Period), 
+                                max = max(companies$Period)),
+               ),
+               mainPanel(
+                 plotOutput("corrPlot", height = "800px", width = "100%")
+               )
+             )
+    )
   )
-)
 )
 
 # Server
@@ -103,12 +113,20 @@ server <- function(input, output) {
   
   # Scatter plot
   output$plot1 <- renderPlot({
+    filtered_data <- companies_data[companies_data$Company %in% input$selectedCompanies, ]
+    if (nrow(filtered_data) == 0) {
+      return(
+        ggplot() + 
+          annotate("text", x = 0.5, y = 0.5, label = "No companies selected", size = 5, hjust = 0.5) + 
+          theme_void()
+      )
+    }
     p1 <- ggplot() + theme_bw()
     if (input$company == TRUE) {
-      p1 <- p1 + geom_point(aes(x = .data[[input$xVar]], y = .data[[input$yVar]], color = Company), data = companies_data) + 
+      p1 <- p1 + geom_point(aes(x = .data[[input$xVar]], y = .data[[input$yVar]], color = Company), data = filtered_data) + 
         theme(axis.text.x = element_text(angle = 45, hjust = 1), plot.margin = margin(1, 1, 2, 1))
     } else {
-      p1 <- p1 + geom_point(aes(x = .data[[input$xVar]], y = .data[[input$yVar]]), data = companies_data) + 
+      p1 <- p1 + geom_point(aes(x = .data[[input$xVar]], y = .data[[input$yVar]]), data = filtered_data) + 
         theme(axis.text.x = element_text(angle = 45, hjust = 1), plot.margin = margin(1, 1, 2, 1))
     }
     print(p1)
