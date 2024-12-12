@@ -11,6 +11,7 @@ companies_data <- read_csv(file = "./Top_12_German_Companies_NEW.csv")
 variables <- setdiff(names(companies), c("Company", "Period"))
 variables2 <- setdiff(names(companies), c("Company", "Period"))
 variablesFiltered = variables[-(1:2)]
+numericVariables <- names(companies_data)[sapply(companies_data, is.numeric)]
 companies$Period <- as.Date(companies$Period, format = "%Y-%m-%d")
 companies_list <- companies %>% distinct(Company) %>% pull()
 
@@ -73,6 +74,26 @@ tabsetPanel(
                plotOutput(outputId = "boxPlot", height = "800px", width = "100%")
              )
            )
+  ),
+  tabPanel("Correlation Heatmap",
+           sidebarLayout(
+             sidebarPanel(
+               checkboxGroupInput(
+                 inputId = "corrVars",
+                 label = "Select Variables",
+                 choices = numericVariables,
+                 selected = numericVariables
+               ),
+               dateRangeInput("corrDates", "Date range", 
+                              start = min(companies$Period), 
+                              end = max(companies$Period),
+                              min = min(companies$Period), 
+                              max = max(companies$Period)),
+             ),
+             mainPanel(
+               plotOutput("corrPlot", height = "800px", width = "100%")
+             )
+           )
   )
 )
 )
@@ -127,6 +148,38 @@ server <- function(input, output) {
       labs(x = "Quarter", y = input$boxVar, fill = "Quarter", title = paste("Box Plot of", input$boxVar, "for", input$boxCompany)) +
       theme_bw()
     print(p_box)
+  })
+  #Correlation Heatmap
+  output$corrPlot <- renderPlot({
+    req(input$corrVars) 
+    
+    corr_data <- companies_data %>%
+      filter(Period >= input$corrDates[1] & Period <= input$corrDates[2])
+    
+    selected_data <- corr_data %>%
+      select(any_of(input$corrVars))
+    
+    selected_data <- selected_data %>% select_if(is.numeric)
+    
+    if (ncol(selected_data) < 2) {
+      return(NULL)
+    }
+    
+    cormat <- cor(selected_data, use = "pairwise.complete.obs")
+    
+    cormat_long <- as.data.frame(as.table(cormat))
+    colnames(cormat_long) <- c("Var1", "Var2", "Correlation")
+    
+    ggplot(cormat_long, aes(x = Var1, y = Var2, fill = Correlation)) +
+      geom_tile(color = "white") +
+      scale_fill_gradient2(low = "blue", mid = "white", high = "red",
+                           midpoint = 0, limit = c(-1, 1), space = "Lab",
+                           name = "Corr") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      coord_fixed() +
+      labs(title = "Correlation Heatmap",
+           subtitle = paste("Variables from", input$corrDates[1], "to", input$corrDates[2]))
   })
 }
 
