@@ -11,13 +11,12 @@ library(RColorBrewer)
 
 # Load data
 companies <- read_csv(file = "./Top_12_German_Companies_NEW.csv")
-companies_data <- read_csv(file = "./Top_12_German_Companies_NEW.csv")
 
 # Prepare variables
 variables <- setdiff(names(companies), c("Company", "Period"))
 variables2 <- setdiff(names(companies), c("Company", "Period"))
 variablesFiltered = variables[-(1:2)]
-numericVariables <- names(companies_data)[sapply(companies_data, is.numeric)]
+numericVariables <- names(companies)[sapply(companies, is.numeric)]
 companies$Period <- as.Date(companies$Period, format = "%Y-%m-%d")
 companies_list <- companies %>% distinct(Company) %>% pull()
 
@@ -113,7 +112,7 @@ server <- function(input, output) {
   
   # Scatter plot
   output$plot1 <- renderPlot({
-    filtered_data <- companies_data[companies_data$Company %in% input$selectedCompanies, ]
+    filtered_data <- companies[companies$Company %in% input$selectedCompanies, ]
     if (nrow(filtered_data) == 0) {
       return(
         ggplot() + 
@@ -134,7 +133,7 @@ server <- function(input, output) {
   
   # Bar plot
   output$plot2 <- renderPlot({
-    company_specific_df <- companies_data %>% 
+    company_specific_df <- companies %>% 
       filter(Company == input$company) %>% 
       mutate(Period = as.Date(Period, "%m/%d/%Y")) %>% 
       filter(Period > input$dates[1] & Period < input$dates[2])
@@ -160,7 +159,7 @@ server <- function(input, output) {
   
   # Box plot
   output$boxPlot <- renderPlot({
-    box_data <- companies_data %>% filter(Company == input$boxCompany)
+    box_data <- companies %>% filter(Company == input$boxCompany)
     p_box <- ggplot(box_data, aes(x = as.factor(quarter(Period)), y = .data[[input$boxVar]], fill = as.factor(quarter(Period)))) +
       geom_boxplot() +
       labs(x = "Quarter", y = input$boxVar, fill = "Quarter", title = paste("Box Plot of", input$boxVar, "for", input$boxCompany)) +
@@ -171,7 +170,7 @@ server <- function(input, output) {
   output$corrPlot <- renderPlot({
     req(input$corrVars) 
     
-    corr_data <- companies_data %>%
+    corr_data <- companies %>%
       filter(Period >= input$corrDates[1] & Period <= input$corrDates[2])
     
     selected_data <- corr_data %>%
